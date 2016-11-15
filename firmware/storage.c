@@ -41,6 +41,8 @@
 #include "layout2.h"
 #include "usb.h"
 
+#include "xmr/crypto-ops.h"
+
 Storage storage;
 
 uint32_t storage_uuid[12/sizeof(uint32_t)];
@@ -402,6 +404,38 @@ bool storage_getRootNode(HDNode *node, const char *curve, bool usePassphrase)
 		}
 		return true;
 	}
+
+	// For Monero, hijack node::private_key into a spendkey
+	if (storage.has_node && strcmp(curve, ED25519_NAME) == 0) {
+		if (!protectPassphrase()) {
+			return false;
+		}
+		if (storage.has_passphrase_protection && storage.passphrase_protection && sessionPassphraseCached && strlen(sessionPassphrase) > 0) {
+			// decrypt hd node
+			uint8_t secret[64];
+			PBKDF2_HMAC_SHA512_CTX pctx;
+			pbkdf2_hmac_sha512_Init(&pctx, (const uint8_t *)sessionPassphrase, strlen(sessionPassphrase), (const uint8_t *)"TREZORHD", 8);
+			get_root_node_callback(0, BIP39_PBKDF2_ROUNDS);
+			for (int i = 0; i < 8; i++) {
+				pbkdf2_hmac_sha512_Update(&pctx, BIP39_PBKDF2_ROUNDS / 8);
+				get_root_node_callback((i + 1) * BIP39_PBKDF2_ROUNDS / 8, BIP39_PBKDF2_ROUNDS);
+			}
+			pbkdf2_hmac_sha512_Final(&pctx, secret);			
+			SHA3_CTX ctx;
+			keccak_512_Init(&ctx);
+			keccak_Update(&ctx, secret, sizeof(secret));  
+			keccak_Final(&ctx, secret);
+			sc_reduce(secret);
+			memcpy(node->private_key.bytes, secret, 32);
+			// deterministically create viewkey from spend_key, use node::chain_code as viewkey
+			keccak_512_Init(&ctx);
+			keccak_Update(&ctx, node->private_key.bytes, sizeof(node->private_key.bytes));  
+			keccak_Final(&ctx, node->chain_code.bytes);
+			sc_reduce32(node->chain_code.bytes);
+		}
+		return true;
+	}
+
 
 	const uint8_t *seed = storage_getSeed(usePassphrase);
 	if (seed == NULL) {

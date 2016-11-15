@@ -49,6 +49,10 @@
 #include <libopencm3/stm32/flash.h>
 #include "ethereum.h"
 
+// Monero
+#include "xmr/cryptonote-basic.h";
+#include "xmr/cryptonote-format-utils.h"
+
 // message methods
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
@@ -462,6 +466,41 @@ void fsm_msgEthereumTxAck(EthereumTxAck *msg)
 	ethereum_signing_txack(msg);
 }
 
+/*
+void fsm_msgMoneroSignTx(MoneroSignTx *msg)
+{
+	if (!storage_isInitialized()) {
+		fsm_sendFailure(FailureType_Failure_NotInitialized, "Device not initialized");
+		return;
+	}
+
+	if (msg->inputs_count < 1) {
+		fsm_sendFailure(FailureType_Failure_Other, "Transaction must have at least one input");
+		layoutHome();
+		return;
+	}
+
+	if (msg->outputs_count < 1) {
+		fsm_sendFailure(FailureType_Failure_Other, "Transaction must have at least one output");
+		layoutHome();
+		return;
+	}
+
+	if (!protectPin(true)) {
+		layoutHome();
+		return;
+	}
+
+	const CoinType *coin = fsm_getCoin(msg->coin_name);
+	if (!coin) return;
+	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, 0, 0);
+	if (!node) return;
+
+	monero_signing_init(msg->inputs_count, msg->outputs_count, node, msg->version, msg->lock_time);
+}
+*/
+
+
 void fsm_msgCipherKeyValue(CipherKeyValue *msg)
 {
 	if (!storage_isInitialized()) {
@@ -692,6 +731,53 @@ void fsm_msgEthereumGetAddress(EthereumGetAddress *msg)
 	}
 
 	msg_write(MessageType_MessageType_EthereumAddress, resp);
+	layoutHome();
+}
+
+void fsm_msgXmrGetAddress(XmrGetAddress *msg)
+{
+	RESP_INIT(XmrAddress);
+
+	if (!storage_isInitialized()) 
+	{
+		fsm_sendFailure(FailureType_Failure_NotInitialized, "Device not initialized");
+		return;
+	}
+
+	if (!protectPin(true)) 
+	{
+		layoutHome();
+		return;
+	}
+
+	const HDNode *node = fsm_getDerivedNode(ED25519_NAME, 0, 0);
+	if (!node) return;
+
+	resp->address.size = msg->has_payment_id ? 106 : 95;
+
+	xmr_secret_key sec_spend, sec_view;
+	sec_spend.data = node->private_key.bytes;
+	sec_view.data = node->chain_code.bytes;
+		
+	xmr_address xmr_addr;
+	if(!xmr_secret_key_to_public_key(sec_spend, xmr_addr.spend_key.data)) return;
+	if(!xmr_secret_key_to_public_key(sec_view, xmr_addr.view_key.data)) return;
+	if (!xmr_get_account_address_as_str(msg->has_payment_id, false, node, resp->address.bytes), msg->payment_id, resp->address.bytes) return;
+
+	if (msg->has_show_display && msg->show_display) {
+		char desc[16];
+		strlcpy(desc, "Address:", sizeof(desc));
+
+		layoutAddress(resp->address.bytes, desc);
+		if (!protectButton(ButtonRequestType_ButtonRequest_Address, true)) 
+		{
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, "Show address cancelled");
+			layoutHome();
+			return;
+		}
+	}
+
+	msg_write(MessageType_MessageType_XmrAddress, resp);
 	layoutHome();
 }
 

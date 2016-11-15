@@ -76,6 +76,7 @@ static const struct MessagesMap_t MessagesMap[] = {
 	{'n', 'i', MessageType_MessageType_EthereumGetAddress,		EthereumGetAddress_fields,	(void (*)(void *))fsm_msgEthereumGetAddress},
 	{'n', 'i', MessageType_MessageType_EthereumSignTx,		EthereumSignTx_fields,		(void (*)(void *))fsm_msgEthereumSignTx},
 	{'n', 'i', MessageType_MessageType_EthereumTxAck,		EthereumTxAck_fields,		(void (*)(void *))fsm_msgEthereumTxAck},
+	{'n', 'i', MessageType_MessageType_XmrGetAddress,		XmrGetAddress_fields,	(void (*)(void *))fsm_msgXmrGetAddress},	
 	// out messages
 	{'n', 'o', MessageType_MessageType_Success,				Success_fields,				0},
 	{'n', 'o', MessageType_MessageType_Failure,				Failure_fields,				0},
@@ -100,6 +101,7 @@ static const struct MessagesMap_t MessagesMap[] = {
 	{'n', 'o', MessageType_MessageType_WordRequest,			WordRequest_fields,			0},
 	{'n', 'o', MessageType_MessageType_EthereumAddress,		EthereumAddress_fields,		0},
 	{'n', 'o', MessageType_MessageType_EthereumTxRequest,		EthereumTxRequest_fields,		0},
+	{'n', 'o', MessageType_MessageType_XmrAddress,		XmrAddress_fields,		0},	
 #if DEBUG_LINK
 	// debug in messages
 //	{'d', 'i', MessageType_MessageType_DebugLinkDecision,	DebugLinkDecision_fields,	(void (*)(void *))fsm_msgDebugLinkDecision},

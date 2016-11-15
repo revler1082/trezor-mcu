@@ -462,7 +462,7 @@ const pb_field_t DebugLinkFlashErase_fields[2] = {
 #if !defined(PB_FIELD_32BIT)
 /* If you get an error here, it means that you need to define PB_FIELD_32BIT
  * compile-time option. You can do that in pb.h or on compiler command line.
- * 
+ *
  * The reason you need to do this is that some of your messages contain tag
  * numbers or field sizes that are larger than what can fit in 8 or 16 bit
  * field descriptors.
@@ -473,5 +473,3 @@ STATIC_ASSERT((pb_membersize(Features, coins[0]) < 65536 && pb_membersize(Public
 #if !defined(PB_FIELD_16BIT) && !defined(PB_FIELD_32BIT)
 #error Field descriptor for EncryptedMessage.message is too large. Define PB_FIELD_16BIT to fix this.
 #endif
-
-
