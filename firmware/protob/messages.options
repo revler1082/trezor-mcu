@@ -108,17 +108,6 @@ EthereumTxRequest.signature_s		max_size:32
 
 EthereumTxAck.data_chunk		max_size:1024
 
-MoneroSignTx.address_n          max_count:8
-MoneroSignTx.fee			          max_size:32
-MoneroSignTx.to			            max_size:95
-MoneroSignTx.value			        max_size:32
-MoneroSignTx.data_initial_chunk	max_size:1024
-
-MoneroTxRequest.signature_r     max_size:32
-MoneroTxRequest.signature_s	    max_size:32
-
-MoneroTxAck.data_chunk		      max_size:1024
-
 SignIdentity.challenge_hidden		max_size:256
 SignIdentity.challenge_visual		max_size:256
 SignIdentity.ecdsa_curve_name		max_size:32
@@ -154,4 +143,3 @@ DebugLinkLog.text			max_size:256
 
 DebugLinkMemory.memory			max_size:1024
 DebugLinkMemoryWrite.memory		max_size:1024
-
