@@ -34,7 +34,7 @@ const CoinType coins[COINS_COUNT] = {
 	{true, "Dash",          true, "DASH", true,   76, true,     100000, true,   16, false, 0, false,  0, true, "\x19" "DarkCoin Signed Message:\n", },
 	{true, "Zcash",         true, "ZEC",  true, 7352, true,    1000000, true, 7357, false, 0, false,  0, true, "\x16" "Zcash Signed Message:\n",    },
 	{true, "Zcash Testnet", true, "TAZ",  true, 7461, true,   10000000, true, 7354, false, 0, false,  0, true, "\x16" "Zcash Signed Message:\n",    },
-	{true, "Monero", 				true, "XMR",  true, 	12, true, 8000000000, true,    0, false, 0, false,  0, true, "\x16" "Monero Signed Message:\n",    },
+	{true, "Monero", 				true, "XMR",  true, 	12, true, 8000000000, true,    0, false, 0, false,  0, true, "\x16" "Monero Signed Message:\n",    }
 };
 
 const CoinType *coinByShortcut(const char *shortcut)

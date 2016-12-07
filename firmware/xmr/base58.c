@@ -1,7 +1,10 @@
 
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include "base58.h"
 
-uint64_t xmr_uint_8be_to_64(const uint8_t *data, size_t size);
+uint64_t xmr_uint_8be_to_64(const uint8_t *data, size_t size)
 {
 	assert(1 <= size && size <= sizeof(uint64_t));
 
@@ -31,12 +34,12 @@ void xmr_b58_encode_block(const uint8_t *block, size_t size, char *res)
 	{
 		uint64_t remainder = num % XMR_B58_ALPHABET_SIZE;
 		num /= XMR_B58_ALPHABET_SIZE;
-		res[i] = XMR_b58_alphabet[remainder];
+		res[i] = xmr_b58_alphabet[remainder];
 		--i;
 	}
 }
 
-void xmr_b58_encode(const uint8_t *data, size_t datalen, char *encoded);
+void xmr_b58_encode(const uint8_t *data, size_t datalen, char *encoded)
 {
 	size_t block_count = datalen / XMR_B58_FULL_BLOCK_SIZE;
 	size_t last_block_size = datalen % XMR_B58_FULL_BLOCK_SIZE;

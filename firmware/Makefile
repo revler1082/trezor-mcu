@@ -53,6 +53,14 @@ OBJS += protob/messages.pb.o
 OBJS += protob/storage.pb.o
 OBJS += protob/types.pb.o
 
+#monero
+OBJS += xmr/base58.o
+OBJS += xmr/cryptonote-basic.o
+OBJS += xmr/cryptonote-format-utils.o
+OBJS += ../vendor/trezor-crypto/xmr/crypto-ops.o
+OBJS += ../vendor/trezor-crypto/xmr/crypto-opts-data.o
+OBJS += ../vendor/trezor-crypto/xmr/crypto.o
+
 include ../Makefile.include
 
 CFLAGS += -Wno-sequence-point

@@ -1,10 +1,14 @@
 #include "cryptonote-format-utils.h"
 #include "constants.h"
-#include "keccak.h"
+#include "../sha3.h"
+#include <string.h>
+#include <stdlib.h>
+#include "base58.h"
+#include "xmr/crypto.h"
 
-bool xmr_encrypt_payment_id(uint8_t *payment_id, const xmr_public_key *pubkey, const xmr_secret_key *seckey)
+bool xmr_encrypt_payment_id(const xmr_public_key *pubkey, const xmr_secret_key *seckey, uint8_t *payment_id)
 {
-	xmr_derivation derivation;
+	xmr_key_derivation derivation;
 	xmr_hash hash;
 	uint8_t data[sizeof(derivation.data) + 1];
 
@@ -13,7 +17,10 @@ bool xmr_encrypt_payment_id(uint8_t *payment_id, const xmr_public_key *pubkey, c
 
 	memcpy(data, derivation.data, sizeof(derivation.data));
 	data[sizeof(derivation.data)] = XMR_ENCRYPTED_PAYMENT_ID_TAIL;
-	keccak(data, sizeof(data), hash.data, sizeof(hash.data));
+	SHA3_CTX ctx;
+	keccak_256_Init(&ctx);
+	keccak_Update(&ctx, data, sizeof(data));
+	keccak_Final(&ctx, hash.data);
 
 	for (size_t i = 0; i < 8; i++)
 		payment_id[i] ^= hash.data[i];
@@ -23,7 +30,7 @@ bool xmr_encrypt_payment_id(uint8_t *payment_id, const xmr_public_key *pubkey, c
 
 void xmr_add_tx_pub_key_to_extra(const xmr_public_key *tx_pub_key, uint8_t *extra, size_t *count)
 {
-	extra[(*count)++] = TX_EXTRA_TAG_PUBKEY;
+	extra[(*count)++] = XMR_TX_EXTRA_TAG_PUBKEY;
 	memcpy(extra + *count, tx_pub_key->data, sizeof(tx_pub_key->data));
 	*count += sizeof(tx_pub_key->data);
 }

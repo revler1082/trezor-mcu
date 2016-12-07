@@ -127,7 +127,7 @@ static void ethereumFormatAmount(bignum256 *val, char buffer[25])
 			last_used = i;
 		}
 	}
-	
+
 	if (last_used < 3) {
 		// value is smaller than 1e9 wei => show value in wei
 		for (int i = last_used; i >= 0; i--) {
@@ -182,11 +182,11 @@ static void layoutMoneroConfirmTx(const uint8_t *to, uint32_t to_len, const uint
 	bn_read_be(pad_val, &val);
 
 	char amount[25];
-	if (bn_is_zero(&val)) 
+	if (bn_is_zero(&val))
 	{
 		strcpy(amount, "message");
-	} 
-	else 
+	}
+	else
 	{
 		ethereumFormatAmount(&val, amount);
 	}
@@ -195,7 +195,7 @@ static void layoutMoneroConfirmTx(const uint8_t *to, uint32_t to_len, const uint
 	static char _to2[17] = {0};
 	static char _to3[17] = {0};
 
-	if (to_len) 
+	if (to_len)
 	{
 		strcpy(_to1, "to ");
 		data2hex(to, 6, _to1 + 3);
@@ -316,9 +316,9 @@ static void layoutEthereumFee(const uint8_t *value, uint32_t value_len,
 static bool monero_signing_check(MoneroSignTx *msg)
 {
 	/*
-	for(auto& it = msg->dests.begin(); it != msg->dests.end(); ++it) 
+	for(auto& it = msg->dests.begin(); it != msg->dests.end(); ++it)
 	{
-		if( it->addr.m_spend_public_key != 
+		if( it->addr.m_spend_public_key !=
 				&& it->addr.m_view_public_key. )
 	}
 	*/
@@ -332,26 +332,26 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 	sha3_256_Init(&keccak_ctx);
 
 	memset(&resp, 0, sizeof(MoneroTxRequest));
-	
+
 	if (!msg->has_data_initial_chunk) msg->data_initial_chunk.size = 0;
 	if (!msg->has_to) msg->to.size = 0;
 
-	if (msg->has_data_length) 
+	if (msg->has_data_length)
 	{
-		if (msg->data_length == 0) 
+		if (msg->data_length == 0)
 		{
 			fsm_sendFailure(FailureType_Failure_Other, "Invalid data length provided");
 			monero_signing_abort();
 			return;
 		}
-		
-		if (!msg->has_data_initial_chunk || msg->data_initial_chunk.size == 0) 
+
+		if (!msg->has_data_initial_chunk || msg->data_initial_chunk.size == 0)
 		{
 			fsm_sendFailure(FailureType_Failure_Other, "Data length provided, but no initial chunk");
 			monero_signing_abort();
 			return;
 		}
-		
+
 		/* Our encoding only supports transactions up to 2^24 bytes.  To
 		 * prevent exceeding the limit we use a stricter limit on data length.
 		 */
@@ -361,16 +361,16 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 			monero_signing_abort();
 			return;
 		}
-		
+
 		data_total = msg->data_length;
-		
-	} 
-	else 
+
+	}
+	else
 	{
 		data_total = 0;
 	}
-	
-	if (msg->data_initial_chunk.size > data_total) 
+
+	if (msg->data_initial_chunk.size > data_total)
 	{
 		fsm_sendFailure(FailureType_Failure_Other, "initial chunk size > total");
 		monero_signing_abort();
@@ -378,7 +378,7 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 	}
 
 	// safety checks
-	if (!monero_signing_check(msg)) 
+	if (!monero_signing_check(msg))
 	{
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing aborted (safety check failed)");
 		monero_signing_abort();
@@ -386,17 +386,17 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 	}
 
 	layoutMoneroConfirmTx(msg->to.bytes, msg->to.size, msg->value.bytes, msg->value.size);
-	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) 
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false))
 	{
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled by user");
 		monero_signing_abort();
 		return;
 	}
 
-	if (data_total > 0) 
+	if (data_total > 0)
 	{
 		layoutMoneroData(msg->data_initial_chunk.bytes, msg->data_initial_chunk.size, data_total);
-		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) 
+		if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false))
 		{
 			fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled by user");
 			monero_signing_abort();
@@ -405,22 +405,22 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 	}
 
 	layoutMoneroFee(
-		msg->value.bytes, 
+		msg->value.bytes,
 		msg->value.size,
-		msg->gas_price.bytes, 
+		msg->gas_price.bytes,
 		msg->gas_price.size,
-		msg->gas_limit.bytes, 
+		msg->gas_limit.bytes,
 		msg->gas_limit.size
 	);
-						
-	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) 
+
+	if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false))
 	{
 		// user saw the fee and was like wwhhhhhaaaaaaattt!?
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled by user");
 		monero_signing_abort();
 		return;
 	}
-	
+
 	/* Stage 1: Calculate total RLP length */
 	uint32_t rlp_length = 0;
 
@@ -449,10 +449,10 @@ void monero_signing_init(MoneroSignTx *msg, const HDNode *node)
 
 	memcpy(privkey, node->private_key, 32);
 
-	if (data_left > 0) 
+	if (data_left > 0)
 	{
 		send_request_chunk();
-	} 
+	}
 	else
 	{
 		send_signature();

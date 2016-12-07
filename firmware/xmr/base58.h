@@ -1,8 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 // b58 address encoder taken (from cryptonote)
 
+
 #ifndef __XMR_BASE58_H__
 #define __XMR_BASE58_H__
+
+#include <stdint.h>
+#include <stddef.h>
+
+#include "../base58.h"
+#include <assert.h>
 
 static const char xmr_b58_alphabet[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 static const size_t xmr_b58_encoded_block_sizes[] = {0, 2, 3, 5, 6, 7, 9, 10, 11};

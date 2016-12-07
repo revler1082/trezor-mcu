@@ -1,8 +1,27 @@
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "base58.h"
 #include "constants.h"
 #include "cryptonote-basic.h"
 #include "../sha3.h"
+
+void xmr_encode_varint(uint64_t value, uint8_t **ptr, size_t *incount)
+{
+	uint8_t *p = *ptr;
+	size_t count = 1;
+    while (value >= 0x80)
+	{
+        *p++ = ((uint8_t)(value & 0x7F)) | 0x80;
+        value >>= 7;
+        ++count;
+    }
+
+	*p++ = ((uint8_t)value) & 0x7F;
+	*ptr += count;
+	*incount += count;
+}
 
 bool xmr_get_account_address_as_str(bool integrated, bool testnet, const xmr_address *address, const xmr_hash *payment_id, char *encoded_addr)
 {
@@ -34,11 +53,11 @@ bool xmr_get_account_address_as_str(bool integrated, bool testnet, const xmr_add
 	//keccak(buffer, len, checksum.data, sizeof(checksum.data));
 	SHA3_CTX ctx;
   keccak_256_Init(&ctx);
-  keccak_Update(&ctx, buffer, len);  
+  keccak_Update(&ctx, buffer, len);
   keccak_Final(&ctx, checksum.data);
 	memcpy(buffer + len, checksum.data, XMR_ADDRESS_CHECKSUM_SIZE);
 	len += XMR_ADDRESS_CHECKSUM_SIZE;
-	b58_encode(buffer, len, encoded_addr);
+	xmr_b58_encode(buffer, len, encoded_addr);
 
 	return true;
 }

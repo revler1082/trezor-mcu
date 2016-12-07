@@ -2,9 +2,7 @@
 #ifndef __XMR_CRYPTONOTE_BASIC_H__
 #define __XMR_CRYPTONOTE_BASIC_H__
 
-#include "crypto.h";
-
-typedef
+#include "xmr/crypto.h"
 
 typedef struct xmr_address_t
 {

@@ -42,6 +42,7 @@
 #include "usb.h"
 
 #include "xmr/crypto-ops.h"
+#include "sha3.h"
 
 Storage storage;
 
@@ -65,7 +66,7 @@ The area for pin failures looks like this:
 0 ... 0 pinfail 0xffffffff .. 0xffffffff
 The pinfail is a binary number of the form 1...10...0,
 the number of zeros is the number of pin failures.
-This layout is used because we can only clear bits without 
+This layout is used because we can only clear bits without
 erasing the flash.
 
 The area for u2f counter updates is just a sequence of zero-bits
@@ -410,6 +411,9 @@ bool storage_getRootNode(HDNode *node, const char *curve, bool usePassphrase)
 		if (!protectPassphrase()) {
 			return false;
 		}
+		if (hdnode_from_xprv(storage.node.depth, storage.node.child_num, storage.node.chain_code.bytes, storage.node.private_key.bytes, curve, node) == 0) {
+			return false;
+		}
 		if (storage.has_passphrase_protection && storage.passphrase_protection && sessionPassphraseCached && strlen(sessionPassphrase) > 0) {
 			// decrypt hd node
 			uint8_t secret[64];
@@ -420,18 +424,18 @@ bool storage_getRootNode(HDNode *node, const char *curve, bool usePassphrase)
 				pbkdf2_hmac_sha512_Update(&pctx, BIP39_PBKDF2_ROUNDS / 8);
 				get_root_node_callback((i + 1) * BIP39_PBKDF2_ROUNDS / 8, BIP39_PBKDF2_ROUNDS);
 			}
-			pbkdf2_hmac_sha512_Final(&pctx, secret);			
+			pbkdf2_hmac_sha512_Final(&pctx, secret);
 			SHA3_CTX ctx;
 			keccak_512_Init(&ctx);
-			keccak_Update(&ctx, secret, sizeof(secret));  
+			keccak_Update(&ctx, secret, sizeof(secret));
 			keccak_Final(&ctx, secret);
 			sc_reduce(secret);
-			memcpy(node->private_key.bytes, secret, 32);
+			memcpy(node->private_key, secret, 32);
 			// deterministically create viewkey from spend_key, use node::chain_code as viewkey
 			keccak_512_Init(&ctx);
-			keccak_Update(&ctx, node->private_key.bytes, sizeof(node->private_key.bytes));  
-			keccak_Final(&ctx, node->chain_code.bytes);
-			sc_reduce32(node->chain_code.bytes);
+			keccak_Update(&ctx, node->private_key, sizeof(node->private_key));
+			keccak_Final(&ctx, node->chain_code);
+			sc_reduce32(node->chain_code);
 		}
 		return true;
 	}
@@ -441,7 +445,7 @@ bool storage_getRootNode(HDNode *node, const char *curve, bool usePassphrase)
 	if (seed == NULL) {
 		return false;
 	}
-	
+
 	return hdnode_from_seed(seed, 64, curve, node);
 }
 

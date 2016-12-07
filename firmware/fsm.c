@@ -50,8 +50,9 @@
 #include "ethereum.h"
 
 // Monero
-#include "xmr/cryptonote-basic.h";
+#include "xmr/cryptonote-basic.h"
 #include "xmr/cryptonote-format-utils.h"
+#include "xmr/crypto-constants.h"
 
 // message methods
 
@@ -738,13 +739,13 @@ void fsm_msgXmrGetAddress(XmrGetAddress *msg)
 {
 	RESP_INIT(XmrAddress);
 
-	if (!storage_isInitialized()) 
+	if (!storage_isInitialized())
 	{
 		fsm_sendFailure(FailureType_Failure_NotInitialized, "Device not initialized");
 		return;
 	}
 
-	if (!protectPin(true)) 
+	if (!protectPin(true))
 	{
 		layoutHome();
 		return;
@@ -756,20 +757,23 @@ void fsm_msgXmrGetAddress(XmrGetAddress *msg)
 	resp->address.size = msg->has_payment_id ? 106 : 95;
 
 	xmr_secret_key sec_spend, sec_view;
-	sec_spend.data = node->private_key.bytes;
-	sec_view.data = node->chain_code.bytes;
-		
+	memcpy(sec_spend.data, node->private_key, XMR_KEY_SIZE_BYTES);
+	memcpy(sec_view.data, node->chain_code, XMR_KEY_SIZE_BYTES);
+
 	xmr_address xmr_addr;
-	if(!xmr_secret_key_to_public_key(sec_spend, xmr_addr.spend_key.data)) return;
-	if(!xmr_secret_key_to_public_key(sec_view, xmr_addr.view_key.data)) return;
-	if (!xmr_get_account_address_as_str(msg->has_payment_id, false, node, resp->address.bytes), msg->payment_id, resp->address.bytes) return;
+	if(!xmr_secret_key_to_public_key(&sec_spend, &xmr_addr.spend_key)) return;
+	if(!xmr_secret_key_to_public_key(&sec_view, &xmr_addr.view_key)) return;
+	xmr_hash payment_id;
+	memcpy(payment_id.data, msg->payment_id.bytes, XMR_HASH_SIZE);
+	char encoded_addr[resp->address.size];
+	if (!xmr_get_account_address_as_str(msg->has_payment_id, false, &xmr_addr, &payment_id, encoded_addr)) return;
 
 	if (msg->has_show_display && msg->show_display) {
 		char desc[16];
 		strlcpy(desc, "Address:", sizeof(desc));
 
-		layoutAddress(resp->address.bytes, desc);
-		if (!protectButton(ButtonRequestType_ButtonRequest_Address, true)) 
+		layoutAddress(encoded_addr, desc);
+		if (!protectButton(ButtonRequestType_ButtonRequest_Address, true))
 		{
 			fsm_sendFailure(FailureType_Failure_ActionCancelled, "Show address cancelled");
 			layoutHome();
@@ -777,6 +781,7 @@ void fsm_msgXmrGetAddress(XmrGetAddress *msg)
 		}
 	}
 
+	memcpy(resp->address.bytes, encoded_addr, resp->address.size);
 	msg_write(MessageType_MessageType_XmrAddress, resp);
 	layoutHome();
 }
